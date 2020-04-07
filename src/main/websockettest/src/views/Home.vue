@@ -22,14 +22,14 @@
             SocketController.send("/front/one", 1, "1", {})
             SocketController.subscribe("/back/a", function (message) {
                 console.log("收到回信 a")
-                SocketController.send("/front/two",1,"hhhh",{a:"aaaaa"})
+                // SocketController.send("/front/two",1,"hhhh",{a:"aaaaa"})
             },{})
 
-            setTimeout(function(){
-                console.log("++++++=")
-                SocketController.send("/front/one", 1, "1", {})
-
-            },5000)
+            // setTimeout(function(){
+            //     console.log("++++++=")
+            //     SocketController.send("/front/one", 1, "1", {})
+            //
+            // },5000)
             // SocketController.subscribe("/back/a", function (message) {
             //     console.log("收到回信")
             //     SocketController.send("/front/two",1,"hhhh",{a:"aaaaa"})

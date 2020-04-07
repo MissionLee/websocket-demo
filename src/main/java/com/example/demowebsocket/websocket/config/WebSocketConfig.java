@@ -1,8 +1,10 @@
 package com.example.demowebsocket.websocket.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.MethodParameter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -18,6 +20,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
 import org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -78,21 +82,73 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             }
         });
     }
-
+    /**
+     * Inbound 和 OutBound 配置是一样的
+     *
+     * In/Out Channel的理解要和WebSocket 收发区分一下，这里的 In/Out 主要还是说明 Channel
+     *
+     * 对应理解是：向同一个后端地址发送数据，就是像同一个 inChannel
+     *            订阅了同一个后端地址的客户端，服务端用同一个 outChannel 发送数据
+     *
+     * 有一个简单的证明：开启三个前端，订阅同一个后端，后端给前端反馈一个数据的时候，下面 outBound Channel 会打印三次
+     * */
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         /**
          * 猜测：基于 TaskExecutor 异步体系，配置Channel,这套我在写 爬虫下载代码的时候用过
          * */
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setAllowCoreThreadTimeOut(false); // 是否允许触发超时
-        executor.setCorePoolSize();
-        executor.setKeepAliveSeconds();
-        executor.setMaxPoolSize();
-        executor.setQueueCapacity();
-        executor.setTaskDecorator();
-        registration.taskExecutor()
+        executor.setAllowCoreThreadTimeOut(false); // 是否允许触发超时,
+        executor.setCorePoolSize(2); // 线程池大小 core
+        executor.setKeepAliveSeconds(60);// 空闲线程多久被关闭：如果线程池中现有现成数量超过 core number，当某个现成空闲超过设定时间，就会被关闭
+        executor.setMaxPoolSize(3);// 线程池最大大小
+        executor.setQueueCapacity(Integer.MAX_VALUE);// 任务队列大小
+//        executor.setTaskDecorator(); task装饰器，非必要
+        registration.taskExecutor(executor);
 
+
+        /**
+         * ChannelInterceptor 也是在发送/接收信息前后 可以做一些操作，因为可以获取到 message 和 channel 两个参数，所以可以对channel级别做一些统一操作
+         * */
+        ChannelInterceptor interceptor = new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                System.out.println("inbound  Channel Interceptor preSend");
+                return message;
+            }
+
+        };
+        registration.interceptors(interceptor);
+
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        ChannelInterceptor interceptor = new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                System.out.println("outbound Channel Interceptor preSend");
+                return message;
+            }
+        };
+        registration.interceptors(interceptor);
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        HandlerMethodArgumentResolver resolver = new HandlerMethodArgumentResolver() {
+            @Override
+            public boolean supportsParameter(MethodParameter parameter) {
+                Class<?> paramType = parameter.getParameterType();
+                return parameter.hasParameterAnnotation(MessageMap.class);
+            }
+
+            @Override
+            public Object resolveArgument(MethodParameter parameter, Message<?> message) throws Exception {
+
+                return null;
+            }
+        };
     }
 
     @Override
