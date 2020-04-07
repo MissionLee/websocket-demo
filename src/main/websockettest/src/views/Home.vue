@@ -18,22 +18,13 @@
             HelloWorld
         },
         created() {
-            var uns = null;
             SocketController.init("http://localhost:9090/bc/test");
             SocketController.send("/front/one", 1, "1", {})
             SocketController.subscribe("/back/a", function (message) {
                 console.log("收到回信 a")
                 SocketController.send("/front/two",1,"hhhh",{a:"aaaaa"})
             },{})
-            SocketController.subscribe("/back/b", function (message) {
-                console.log("收到回信 b")
-                SocketController.send("/front/two",1,"hhhh", {a:"aaaaa"})
-            },{id:"a"})
 
-            setTimeout(function(){
-                console.log("-----------")
-                SocketController.unsubscribe("a")
-            },2000)
             setTimeout(function(){
                 console.log("++++++=")
                 SocketController.send("/front/one", 1, "1", {})

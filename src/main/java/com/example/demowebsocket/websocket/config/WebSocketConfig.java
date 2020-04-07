@@ -1,7 +1,12 @@
 package com.example.demowebsocket.websocket.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketHandler;
@@ -55,12 +60,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 //                        String username = session.getPrincipal().getName();
                         // log.info("offline: " + username);
 //                        System.out.println("offline: " + username);
-                        System.out.println("断开丽娜姐");
+                        System.out.println("断开");
                         super.afterConnectionClosed(session, closeStatus);
                     }
                     @Override
                     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
                         System.out.println("**************************8");
+                        System.out.println(message);
+                        /**
+                         * ⭐ 我最初想在 handleMessage 里面对数据进行预处理，但是handleMessage中的参数 WebSocketMessage 实际上
+                         * ⭐ 是未经过 STOMP 协议解析的消息，在这里处理，需要自行 解码/编码 STOMP协议数据，所以放弃在这里进行处理
+                         * */
                         super.handleMessage(session,message);
                     }
 
@@ -68,6 +78,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             }
         });
     }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        /**
+         * 猜测：基于 TaskExecutor 异步体系，配置Channel,这套我在写 爬虫下载代码的时候用过
+         * */
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setAllowCoreThreadTimeOut(false); // 是否允许触发超时
+        executor.setCorePoolSize();
+        executor.setKeepAliveSeconds();
+        executor.setMaxPoolSize();
+        executor.setQueueCapacity();
+        executor.setTaskDecorator();
+        registration.taskExecutor()
+
+    }
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config){
         // 配置消息代理的一些参数

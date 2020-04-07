@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.support.MessageHeaderInitializer;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.WebSocketMessage;
 
 import javax.xml.validation.Validator;
 import java.lang.reflect.Array;
